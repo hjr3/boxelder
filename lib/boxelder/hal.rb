@@ -5,7 +5,7 @@ class Hal
     format :json
     parser(
         Proc.new do |body, format| 
-            JSON.parse(body) 
+            JSON.parse(body) if body && body.length >= 2
         end
     )
 
