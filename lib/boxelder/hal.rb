@@ -33,6 +33,9 @@ class Hal
             response = self.class.get(uri, :headers => {'Cookie' => cookie_header})
         end
 
+        # some responses may not have any json
+        return hrefs if response.body.length == 0
+
         if not Halidator.new(response, :json_schema).valid?
             puts "Invalid response from #{uri}"
             return hrefs
