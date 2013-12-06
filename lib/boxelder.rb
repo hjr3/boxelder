@@ -1,3 +1,4 @@
+require 'http-cookie'
 require 'httparty'
 require 'halidator'
 require 'json'

@@ -8,21 +8,18 @@ class Hal
             JSON.parse(body) 
         end
     )
-    headers ({
-        'Host' => "www.hautelook.com",
-        'Accept-Language' => 'en-US,en;q0.8',
-        'Accept' => 'application/json',
-        'Content-Type' => 'application/json'
-    })
 
     def initialize(email, password)
         @email = email
         @password = password
+        @cookie_jar = HTTP::CookieJar.new
 
     end
 
     def crawl(uri)
-        response = self.class.get(uri)
+        cookie_header = HTTP::Cookie.cookie_value(@cookie_jar.cookies(uri))
+
+        response = self.class.get(uri, :headers => {'Cookie' => cookie_header})
 
         hrefs = Array.new
 
@@ -32,7 +29,8 @@ class Hal
             raise Exception.new unless response.code == 200
 
             puts "Requesting #{uri} again after successful login"
-            response = self.class.get(uri)
+            cookie_header = HTTP::Cookie.cookie_value(@cookie_jar.cookies(uri))
+            response = self.class.get(uri, :headers => {'Cookie' => cookie_header})
         end
 
         if not Halidator.new(response, :json_schema).valid?
@@ -64,8 +62,11 @@ class Hal
 
         uri = link_from_rel 'login'
         response = self.class.post(uri, :body => body)
-        cookies =  parse_cookies(response.headers['set-cookie'])
-        self.class.headers 'Cookie' => "PHPSESSID=#{cookies[:PHPSESSID]}"
+        response.headers.get_fields('set-cookie').each do |value|
+            uri = response.request.uri
+
+            @cookie_jar.parse(value, uri)
+        end
 
         response
     end
@@ -74,14 +75,4 @@ class Hal
         'https://www.hautelook.com/api/login'
     end
 
-    def parse_cookies(cookies)
-        cookie_hash = {}
-        cookies.split(', ').each do |cookie|
-            parts = cookie.split(';', 2)
-            array = parts[0].split('=', 2)
-            cookie_hash[array[0].to_sym] = array[1]
-        end
-
-        cookie_hash
-    end
 end
