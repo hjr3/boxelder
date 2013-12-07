@@ -21,6 +21,10 @@ opt_parser = OptionParser.new do |opt|
     opt.on('-p', '--password PASSWORD', 'API login password') do |password|
         options[:password] = password
     end
+
+    opt.on('-v', '--verbose', 'Run verbosely') do |verbose|
+        options[:verbose] = verbose
+    end
 end
 
 opt_parser.parse!
@@ -28,13 +32,14 @@ opt_parser.parse!
 root = options[:root]
 email = options[:email]
 password = options[:password]
+verbose = options[:verbose]
 
 visited = Hash.new
 queue = Array.new
 
 queue.push root
 
-hal = Hal.new email, password
+hal = Hal.new email, password, verbose
 
 until queue.empty?
     uri = queue.shift

@@ -1,7 +1,6 @@
 class Hal
 
     include HTTParty
-    #debug_output $stdout
     format :json
     parser(
         Proc.new do |body, format| 
@@ -9,9 +8,10 @@ class Hal
         end
     )
 
-    def initialize(email, password)
+    def initialize(email, password, verbose)
         @email = email
         @password = password
+        self.class.debug_output $stdout if verbose
         @cookie_jar = HTTP::CookieJar.new
 
     end
