@@ -13,6 +13,7 @@ class Hal
         @password = password
         self.class.debug_output $stdout if verbose
         @cookie_jar = HTTP::CookieJar.new
+        @rels = Hash.new
 
     end
 
@@ -51,7 +52,10 @@ class Hal
             next if rel == "http://hautelook.com/rels/members"
             next if rel == "http://hautelook.com/rels/events"
 
-            hrefs << link[1]["href"]
+            href = link[1]["href"]
+
+            @rels[rel] = href
+            hrefs << href
         end
 
         hrefs
@@ -63,7 +67,7 @@ class Hal
             :password => @password
         }.to_json
 
-        uri = link_from_rel 'login'
+        uri = link_from_rel 'http://hautelook.com/rels/login'
         response = self.class.post(uri, :body => body)
         response.headers.get_fields('set-cookie').each do |value|
             uri = response.request.uri
@@ -75,7 +79,9 @@ class Hal
     end
 
     def link_from_rel(rel)
-        'https://www.hautelook.com/api/login'
+        raise "No relation found: #{rel}" if not @rels.has_key?(rel)
+
+        @rels[rel]
     end
 
 end
